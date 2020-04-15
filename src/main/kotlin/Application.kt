@@ -6,11 +6,10 @@ import io.ktor.features.NotFoundException
 import io.ktor.features.ParameterConversionException
 import io.ktor.features.StatusPages
 import io.ktor.gson.gson
+import io.ktor.http.HttpStatusCode
+import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.response.respondText
-import io.ktor.routing.Routing
-import io.ktor.routing.get
-import io.ktor.routing.route
+import io.ktor.routing.*
 import io.ktor.server.cio.EngineMain
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -145,6 +144,51 @@ fun Application.module(testing: Boolean = false) {
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
                 val model = repository.getById(id) ?: throw NotFoundException()
 
+                call.respond(model)
+
+            }
+
+            delete("/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                repository.removeById(id)
+                call.respond(HttpStatusCode.NoContent)
+
+
+            }
+
+            post {
+
+                val model = call.receive<Post>()
+                repository.save(model)
+                call.respond(model)
+
+            }
+
+        }
+
+        route("/api/v1/like") {
+
+            get("/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                val model = repository.getById(id) ?: throw NotFoundException()
+
+                repository.likeById(id)
+                call.respond(model)
+
+            }
+
+        }
+
+        route("/api/v1/dislike") {
+
+            get("/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                val model = repository.getById(id) ?: throw NotFoundException()
+
+                repository.dislikeById(id)
                 call.respond(model)
 
             }

@@ -34,11 +34,25 @@ class PostRepositoryInMemory : PostRepository {
     }
 
     override suspend fun likeById(id: Int): Post? {
-        TODO("Not yet implemented")
+
+        val model = items.find { it.id == id } ?: return null
+
+        model.likeCount++
+        save(model)
+
+        return model
+
     }
 
     override suspend fun dislikeById(id: Int): Post? {
-        TODO("Not yet implemented")
+
+        val model = items.find { it.id == id } ?: return null
+
+        model.likeCount--
+        save(model)
+
+        return model
+
     }
 
 }
