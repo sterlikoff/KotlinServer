@@ -1,57 +1,86 @@
 package repositories
 
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import models.Post
 
 class PostRepositoryInMemory : PostRepository {
 
     private var nextId = 1
     private val items = mutableListOf<Post>()
+    private val context = newSingleThreadContext("PostRepository")
 
     override suspend fun getAll(): List<Post> {
-        return items.reversed()
+
+        return withContext(context) {
+            items.reversed()
+        }
+
     }
 
     override suspend fun getById(id: Int): Post? {
-        return items.find { it.id == id }
+
+        return withContext(context) {
+            items.find { it.id == id }
+        }
+
     }
 
     override suspend fun save(item: Post): Post {
-        return when (val index = items.indexOfFirst { it.id == item.id }) {
-            -1 -> {
-                val copy = item.copy(id = nextId++)
-                items.add(copy)
-                copy
+
+        return withContext(context) {
+
+            when (val index = items.indexOfFirst { it.id == item.id }) {
+                -1 -> {
+                    val copy = item.copy(id = nextId++)
+                    items.add(copy)
+                    copy
+                }
+                else -> {
+                    items[index] = item
+                    item
+                }
             }
-            else -> {
-                items[index] = item
-                item
-            }
+
         }
+
     }
 
     override suspend fun removeById(id: Int) {
-        items.removeIf { it.id == id }
+
+        withContext(context) {
+            items.removeIf { it.id == id }
+        }
+
     }
 
     override suspend fun likeById(id: Int): Post? {
 
-        val model = items.find { it.id == id } ?: return null
+        return withContext(context) {
 
-        model.likeCount++
-        save(model)
+            val model = items.find { it.id == id } ?: return@withContext null
 
-        return model
+            model.likeCount++
+            save(model)
+
+            model
+
+        }
 
     }
 
     override suspend fun dislikeById(id: Int): Post? {
 
-        val model = items.find { it.id == id } ?: return null
+        return withContext(context) {
 
-        model.likeCount--
-        save(model)
+            val model = items.find { it.id == id } ?: return@withContext null
 
-        return model
+            model.likeCount--
+            save(model)
+
+            model
+
+        }
 
     }
 
