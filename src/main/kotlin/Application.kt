@@ -69,36 +69,22 @@ fun Application.module(testing: Boolean = false) {
                 )
             )
 
-            val sourcePost = Post(
-                0,
-                "Is only video Post",
-                "Kolya",
-                170400999,
-                71,
-                810,
-                1,
-                null,
-                null,
-                "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-            )
-
-            repository.save(sourcePost)
-
-            repository.save(
+            val sourcePost = repository.save(
                 Post(
                     0,
-                    "Is sharing of previous",
-                    "Marya Petrosyan",
-                    170401000,
-                    3,
-                    1550,
-                    0,
+                    "Is only video Post",
+                    "Kolya",
+                    170400999,
+                    71,
+                    810,
+                    1,
                     null,
                     null,
-                    null,
-                    sourcePost
+                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
                 )
             )
+
+            repository.rePost(sourcePost.id)
 
             repository.save(
                 Post(
@@ -190,6 +176,17 @@ fun Application.module(testing: Boolean = false) {
 
                 repository.dislikeById(id)
                 call.respond(model)
+
+            }
+
+        }
+
+        route("/api/v1/share") {
+
+            get("/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                call.respond(repository.rePost(id) ?: throw NotFoundException())
 
             }
 
