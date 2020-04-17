@@ -14,7 +14,7 @@ repositories {
 }
 
 application {
-    mainClassName = "ru.sterlikoff.ApplicationKt"
+    mainClassName = "ApplicationKt"
 }
 
 dependencies {
