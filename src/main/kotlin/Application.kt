@@ -115,6 +115,16 @@ fun Application.module(testing: Boolean = false) {
 
     install(StatusPages) {
 
+        exception<NotFoundException> { error ->
+            call.respond(HttpStatusCode.NotFound)
+            throw error
+        }
+
+        exception<ParameterConversionException> { error ->
+            call.respond(HttpStatusCode.BadRequest)
+            throw error
+        }
+
     }
 
     install(Routing) {

@@ -12,7 +12,7 @@ class PostRepositoryInMemory : PostRepository {
     private val mutex = Mutex()
 
     private fun get(id: Int): Post? {
-        return items.find { it.id == id }!!
+        return items.find { it.id == id }
     }
 
     override suspend fun getAll(): List<PostDto> {
