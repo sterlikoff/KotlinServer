@@ -3,7 +3,6 @@ package repositories
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import models.Post
-import models.PostDto
 
 class PostRepositoryInMemory : PostRepository {
 
@@ -11,39 +10,31 @@ class PostRepositoryInMemory : PostRepository {
     private val items = mutableListOf<Post>()
     private val mutex = Mutex()
 
-    private fun get(id: Int): Post? {
-        return items.find { it.id == id }
-    }
-
-    override suspend fun getAll(): List<PostDto> {
-
-        return mutex.withLock {
-            items.reversed().map {
-                PostDto.fromModel(it)
-            }
-        }
-
-    }
-
-    override suspend fun getById(id: Int): PostDto? {
-        return mutex.withLock {
-            get(id)?.let { PostDto.fromModel(it) }
+    override suspend fun getAll(): List<Post> {
+        mutex.withLock {
+            return items.reversed()
         }
     }
 
-    override suspend fun save(item: Post): PostDto {
+    override suspend fun getById(id: Int): Post? {
+        mutex.withLock {
+            return items.find { it.id == id }
+        }
+    }
 
-        return mutex.withLock {
+    override suspend fun save(item: Post): Post {
 
-            when (val index = items.indexOfFirst { it.id == item.id }) {
+        mutex.withLock {
+
+            return when (val index = items.indexOfFirst { it.id == item.id }) {
                 -1 -> {
                     val copy = item.copy(id = nextId++)
                     items.add(copy)
-                    PostDto.fromModel(copy)
+                    copy
                 }
                 else -> {
                     items[index] = item
-                    PostDto.fromModel(item)
+                    item
                 }
             }
 
@@ -59,52 +50,37 @@ class PostRepositoryInMemory : PostRepository {
 
     }
 
-    override suspend fun likeById(id: Int): PostDto? {
+    override suspend fun likeById(id: Int) {
 
-        return mutex.withLock {
+        mutex.withLock {
 
             val model = items.find { it.id == id } ?: return@withLock null
             save(model.copy(likeCount = model.likeCount.inc()))
-            PostDto.fromModel(model)
 
         }
 
     }
 
-    override suspend fun dislikeById(id: Int): PostDto? {
+    override suspend fun dislikeById(id: Int) {
 
-        return mutex.withLock {
+        mutex.withLock {
 
             val model = items.find { it.id == id } ?: return@withLock null
             save(model.copy(likeCount = model.likeCount.dec()))
-            PostDto.fromModel(model)
 
         }
 
     }
 
-    override suspend fun rePost(id: Int): PostDto? {
+    override suspend fun rePost(id: Int) {
 
-        val model = get(id) ?: return null
+        mutex.withLock {
 
-        save(model.copy(rePostCount = model.rePostCount.inc()))
+            val model = getById(id)
+            model?.copy(rePostCount = model.rePostCount.inc())?.let { save(it) }
 
-        return save(
-            Post(
-                0,
-                model.title,
-                model.author,
-                0,
-                0,
-                0,
-                0,
-                model.lon,
-                model.lat,
-                model.videoUrl,
-                model.id,
-                model.advertUrl
-            )
-        )
+        }
+
     }
 
 }

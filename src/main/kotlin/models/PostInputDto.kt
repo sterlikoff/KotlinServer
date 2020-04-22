@@ -1,18 +1,10 @@
 package models
 
-data class Post(
-
-    val id: Int,
+data class PostInputDto(
     val title: String,
     val author: String,
-    val time: Long,
-    val likeCount: Int = 0,
-    val commentCount: Int = 0,
-    val rePostCount: Int = 0,
     val lon: Double? = null,
     val lat: Double? = null,
     val videoUrl: String? = null,
-    val parentId: Int? = null,
     val advertUrl: String? = null
-
 )

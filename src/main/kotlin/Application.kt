@@ -1,6 +1,11 @@
+import exceptions.PasswordChangeException
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
+import io.ktor.auth.authentication
+import io.ktor.auth.jwt.jwt
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.NotFoundException
 import io.ktor.features.ParameterConversionException
@@ -13,97 +18,53 @@ import io.ktor.routing.*
 import io.ktor.server.cio.EngineMain
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import models.Post
+import models.*
+import services.JWTTokenService
+import org.kodein.di.generic.bind
+import org.kodein.di.generic.eagerSingleton
+import org.kodein.di.generic.instance
+import org.kodein.di.ktor.KodeinFeature
+import org.kodein.di.ktor.kodein
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import repositories.PostRepository
 import repositories.PostRepositoryInMemory
+import repositories.UserRepository
+import repositories.UserRepositoryInMemory
+import services.PostService
+import services.UserService
 import kotlin.coroutines.EmptyCoroutineContext
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
 
-    val repository: PostRepository = PostRepositoryInMemory()
+    install(KodeinFeature) {
 
-    with(CoroutineScope(EmptyCoroutineContext)) {
-        launch {
-
-            repository.save(
-                Post(
-                    0,
-                    "Is Video and Event Post",
-                    "Danill Sterlikov",
-                    170484646,
-                    15,
-                    82,
-                    3,
-                    33.1546,
-                    44.46847,
-                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
-            )
-
-
-            repository.save(
-                Post(
-                    0,
-                    "Secondary post with very-very long title. Really very long title.",
-                    "Ivan Ivanov",
-                    170400000,
-                    7,
-                    81,
-                    15
-                )
-            )
-
-            repository.save(
-                Post(
-                    0,
-                    "Is Event Post",
-                    "Kolya",
-                    170400999,
-                    71,
-                    810,
-                    1,
-                    33.1546,
-                    44.46847
-                )
-            )
-
-            val sourcePost = repository.save(
-                Post(
-                    0,
-                    "Is only video Post",
-                    "Kolya",
-                    170400999,
-                    71,
-                    810,
-                    1,
-                    null,
-                    null,
-                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
-            )
-
-            repository.rePost(sourcePost.id)
-
-            repository.save(
-                Post(
-                    0,
-                    "Is Advertising",
-                    "Google",
-                    180400999,
-                    0,
-                    0,
-                    0,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "https://google.com"
-                )
-            )
-
+        bind<PostRepository>() with eagerSingleton {
+            PostRepositoryInMemory()
         }
+
+        bind<UserRepository>() with eagerSingleton {
+            UserRepositoryInMemory()
+        }
+
+        bind<PasswordEncoder>() with eagerSingleton {
+            BCryptPasswordEncoder()
+        }
+
+        bind<JWTTokenService>() with eagerSingleton {
+            JWTTokenService()
+        }
+
+        bind<PostService>() with eagerSingleton {
+            PostService(instance())
+        }
+
+        bind<UserService>() with eagerSingleton {
+            UserService(instance(), instance(), instance())
+        }
+
     }
 
     install(ContentNegotiation) {
@@ -125,20 +86,138 @@ fun Application.module(testing: Boolean = false) {
             throw error
         }
 
+        exception<PasswordChangeException> { error ->
+            call.respond(HttpStatusCode.Forbidden)
+            throw error
+        }
+
+    }
+
+    install(Authentication) {
+
+        val jwtService by kodein().instance<JWTTokenService>()
+        val userService by kodein().instance<UserService>()
+
+        jwt {
+
+            verifier(jwtService.verifier)
+            validate {
+                val id = it.payload.getClaim("id").asInt()
+                userService.getModelById(id)
+            }
+
+        }
+
+    }
+
+    with(CoroutineScope(EmptyCoroutineContext)) {
+
+        launch {
+
+            val userService by kodein().instance<UserService>()
+
+            userService.registration(
+                RegistrationRequestDto(
+                    "admin",
+                    "admin"
+                )
+            )
+
+            val postService by kodein().instance<PostService>()
+
+            postService.save(
+                0,
+                PostInputDto(
+                    "Is Video and Event Post",
+                    "Danill Sterlikov",
+                    33.1546,
+                    44.46847,
+                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
+                )
+            )
+
+            postService.save(
+                0,
+                PostInputDto(
+                    "Secondary post with very-very long title. Really very long title.",
+                    "Ivan Ivanov"
+                )
+            )
+
+            postService.save(
+                0,
+                PostInputDto(
+                    "Is Event Post",
+                    "Kolya",
+                    33.1546,
+                    44.46847
+                )
+            )
+
+            val sourcePost = postService.save(
+                0,
+                PostInputDto(
+                    "Is only video Post",
+                    "Kolya",
+                    null,
+                    null,
+                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
+                )
+            )
+
+            postService.share(sourcePost.id)
+
+            postService.save(
+                0,
+                PostInputDto(
+                    "Is Advertising",
+                    "Google",
+                    null,
+                    null,
+                    null,
+                    "https://google.com"
+                )
+            )
+
+        }
     }
 
     install(Routing) {
+        v1()
+    }
+
+}
+
+fun Routing.v1() {
+
+    val postService by kodein().instance<PostService>()
+    val userService by kodein().instance<UserService>()
+
+    authenticate {
+
+        route("api/v1/profile") {
+
+            get {
+
+                val me = call.authentication.principal<User>()
+                call.respond(me!!)
+
+            }
+
+        }
 
         route("api/v1/posts") {
 
             get {
-                call.respond(repository.getAll())
+                val all = postService.getAll()
+                println(all.size)
+                call.respond(all)
             }
 
             get("/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                val model = repository.getById(id) ?: throw NotFoundException()
+                val model = postService.getById(id)
 
                 call.respond(model)
 
@@ -147,58 +226,71 @@ fun Application.module(testing: Boolean = false) {
             delete("/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                repository.removeById(id)
+                postService.remove(id)
                 call.respond(HttpStatusCode.NoContent)
 
+            }
+
+            post("/create") {
+
+                call.respond(postService.save(0, call.receive()))
 
             }
 
-            post {
+            post("/update/{id}") {
 
-                val model = call.receive<Post>()
-                repository.save(model)
-                call.respond(model)
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                call.respond(postService.save(id, call.receive()))
+
+            }
+
+            get("/like/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                postService.like(id)
+                call.respond(HttpStatusCode.NoContent)
+
+            }
+
+            get("/dislike/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                postService.dislike(id)
+                call.respond(HttpStatusCode.NoContent)
+
+            }
+
+            get("/share/{id}") {
+
+                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
+                postService.share(id)
+                call.respond(HttpStatusCode.NoContent)
 
             }
 
         }
 
-        route("/api/v1/like") {
+    }
 
-            get("/{id}") {
+    route("api/v1/registration") {
 
-                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                val model = repository.getById(id) ?: throw NotFoundException()
+        post {
 
-                repository.likeById(id)
-                call.respond(model)
-
-            }
+            val model: RegistrationRequestDto = call.receive()
+            userService.registration(model)
+            call.respond(HttpStatusCode.NoContent)
 
         }
 
-        route("/api/v1/dislike") {
+    }
 
-            get("/{id}") {
+    route("api/v1/authentication") {
 
-                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                val model = repository.getById(id) ?: throw NotFoundException()
+        post {
 
-                repository.dislikeById(id)
-                call.respond(model)
-
-            }
-
-        }
-
-        route("/api/v1/share") {
-
-            get("/{id}") {
-
-                val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                call.respond(repository.rePost(id) ?: throw NotFoundException())
-
-            }
+            val input = call.receive<AuthenticationRequestDto>()
+            val response = userService.authenticate(input)
+            call.respond(response)
 
         }
 

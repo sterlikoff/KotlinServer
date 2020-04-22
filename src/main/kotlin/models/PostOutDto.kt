@@ -1,11 +1,11 @@
 package models
 
-data class PostDto(
+data class PostOutDto(
 
     val id: Int,
     val title: String,
     val author: String,
-    val time: Int,
+    val time: Long,
     val likeCount: Int = 0,
     val commentCount: Int = 0,
     val rePostCount: Int = 0,
@@ -19,7 +19,7 @@ data class PostDto(
 
     companion object {
 
-        fun fromModel(model: Post) = PostDto(
+        fun fromModel(model: Post) = PostOutDto(
 
             id = model.id,
             title = model.title,
