@@ -161,4 +161,22 @@ class ApplicationTest {
 
     }
 
+    @Test
+    fun testAlien() {
+
+        withTestApplication({ module() }) {
+
+            val token = getAuthToken(this)
+
+            with(handleRequest(HttpMethod.Delete, "/api/v1/posts/1") {
+                addHeader(HttpHeaders.Authorization, "Bearer $token")
+            }) {
+                response
+                assertEquals(HttpStatusCode.Forbidden, response.status())
+            }
+
+        }
+
+    }
+
 }

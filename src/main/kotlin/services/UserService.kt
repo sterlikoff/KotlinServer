@@ -2,6 +2,8 @@ package services
 
 import exceptions.PasswordChangeException
 import exceptions.UsernameAlreadyExistsException
+import io.ktor.application.call
+import io.ktor.auth.authentication
 import io.ktor.features.NotFoundException
 import models.*
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -22,24 +24,15 @@ class UserService(
         return UserDto.fromModel(model)
     }
 
-    suspend fun changePassword(id: Int, input: PasswordChangeRequestDto) {
-
-        val model = repository.getById(id) ?: throw NotFoundException()
-        if (!passwordEncoder.matches(input.old, model.password)) {
-            throw PasswordChangeException("Wrong password!")
-        }
-
-        val copy = model.copy(password = passwordEncoder.encode(input.new))
-        repository.save(copy)
-
-    }
+    suspend fun getModelByUsername(username: String): User = repository.getByUsername(username) ?: throw NotFoundException()
+    suspend fun getByUsername(username: String): UserDto = UserDto.fromModel(getModelByUsername(username))
 
     suspend fun authenticate(input: AuthenticationRequestDto): AuthenticationResponseDto {
+
         val model = repository.getByUsername(input.username) ?: throw NotFoundException()
-        if (!passwordEncoder.matches(input.password, model.password)) {
-            throw PasswordChangeException("Wrong password!")
-        }
+        if (!passwordEncoder.matches(input.password, model.password)) throw PasswordChangeException("Wrong password!")
         val token = tokenService.generate(model.id)
+
         return AuthenticationResponseDto(token)
     }
 

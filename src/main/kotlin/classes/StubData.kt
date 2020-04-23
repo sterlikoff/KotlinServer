@@ -23,46 +23,53 @@ class StubData {
                 )
             )
 
+            userService.registration(
+                RegistrationRequestDto(
+                    "user",
+                    "user"
+                )
+            )
+
+            val user = userService.getModelByUsername("user")
+
             val postService by application.kodein().instance<PostService>()
 
             postService.save(
                 0,
                 PostInputDto(
                     "Is Video and Event Post",
-                    "Danill Sterlikov",
                     33.1546,
                     44.46847,
                     "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
+                ),
+                user
             )
 
             postService.save(
                 0,
-                PostInputDto(
-                    "Secondary post with very-very long title. Really very long title.",
-                    "Ivan Ivanov"
-                )
+                PostInputDto("Secondary post with very-very long title. Really very long title."),
+                user
             )
 
             postService.save(
                 0,
                 PostInputDto(
                     "Is Event Post",
-                    "Kolya",
                     33.1546,
                     44.46847
-                )
+                ),
+                user
             )
 
             val sourcePost = postService.save(
                 0,
                 PostInputDto(
                     "Is only video Post",
-                    "Kolya",
                     null,
                     null,
                     "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
+                ),
+                user
             )
 
             postService.share(sourcePost.id)
@@ -71,12 +78,12 @@ class StubData {
                 0,
                 PostInputDto(
                     "Is Advertising",
-                    "Google",
                     null,
                     null,
                     null,
                     "https://google.com"
-                )
+                ),
+                user
             )
 
         }

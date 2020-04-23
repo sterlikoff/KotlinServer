@@ -1,9 +1,11 @@
 package services
 
+import exceptions.AccessDeniedException
 import io.ktor.features.NotFoundException
 import models.Post
 import models.PostInputDto
 import models.PostOutDto
+import models.User
 import repositories.PostRepository
 
 class PostService(
@@ -14,23 +16,27 @@ class PostService(
         return repository.getAll().map { PostOutDto.fromModel(it) }
     }
 
-    private suspend fun getModelById(id: Int): Post? {
-        return repository.getById(id)
+    private suspend fun getModelById(id: Int): Post {
+        return repository.getById(id)  ?: throw NotFoundException()
     }
 
     suspend fun getById(id: Int): PostOutDto {
-        val model = getModelById(id) ?: throw NotFoundException()
+        val model = getModelById(id)
         return PostOutDto.fromModel(model)
     }
 
-    suspend fun save(id: Int, input: PostInputDto): PostOutDto {
+    private fun checkAccess(post: Post, user: User) {
+        if (post.userId != user.id) throw AccessDeniedException("Access denied")
+    }
 
-        val model = repository.save(when (id) {
+    suspend fun save(id: Int, input: PostInputDto, user: User): PostOutDto {
+
+        val model = when (id) {
 
             0 -> Post(
                 0,
                 input.title,
-                input.author,
+                user.id,
                 System.currentTimeMillis(),
                 0,
                 0,
@@ -41,23 +47,31 @@ class PostService(
                 null,
                 input.advertUrl
             )
-            else -> repository.getById(id)?.copy(
-                title = input.title,
-                author = input.author,
-                lon = input.lon,
-                lat = input.lat,
-                videoUrl = input.videoUrl,
-                advertUrl = input.advertUrl
-            )
+            else -> {
 
-        } ?: throw NotFoundException())
+                getModelById(id).copy(
+                    title = input.title,
+                    lon = input.lon,
+                    lat = input.lat,
+                    videoUrl = input.videoUrl,
+                    advertUrl = input.advertUrl
+                )
 
-        return PostOutDto.fromModel(model)
+            }
+
+        }
+
+        if (id != 0) checkAccess(model, user)
+        return PostOutDto.fromModel(repository.save(model))
 
     }
 
-    suspend fun share(id: Int) = (repository.share(id))
-    suspend fun remove(id: Int) = repository.removeById(id)
+    suspend fun remove(id: Int, user: User) {
+        checkAccess(getModelById(id), user)
+        repository.removeById(id)
+    }
+
+    suspend fun share(id: Int) = repository.share(id)
     suspend fun like(id: Int) = repository.likeById(id)
     suspend fun dislike(id: Int) = repository.dislikeById(id)
 

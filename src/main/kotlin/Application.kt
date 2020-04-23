@@ -1,4 +1,5 @@
 import classes.StubData
+import exceptions.AccessDeniedException
 import exceptions.PasswordChangeException
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -75,19 +76,20 @@ fun Application.module(testing: Boolean = false) {
 
     install(StatusPages) {
 
-        exception<NotFoundException> { error ->
+        exception<NotFoundException> {
             call.respond(HttpStatusCode.NotFound)
-            throw error
         }
 
-        exception<ParameterConversionException> { error ->
+        exception<ParameterConversionException> {
             call.respond(HttpStatusCode.BadRequest)
-            throw error
         }
 
-        exception<PasswordChangeException> { error ->
+        exception<PasswordChangeException> {
             call.respond(HttpStatusCode.Forbidden)
-            throw error
+        }
+
+        exception<AccessDeniedException> {
+            call.respond(HttpStatusCode.Forbidden)
         }
 
     }
@@ -156,22 +158,27 @@ fun Routing.v1() {
 
             delete("/{id}") {
 
+                val user = call.authentication.principal<User>() ?: throw NotFoundException()
+
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                postService.remove(id)
+                postService.remove(id, user)
                 call.respond(HttpStatusCode.NoContent)
 
             }
 
             post("/create") {
 
-                call.respond(postService.save(0, call.receive()))
+                val user = call.authentication.principal<User>() ?: throw NotFoundException()
+                call.respond(postService.save(0, call.receive(), user))
 
             }
 
             post("/update/{id}") {
 
+                val user = call.authentication.principal<User>() ?: throw NotFoundException()
+
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                call.respond(postService.save(id, call.receive()))
+                call.respond(postService.save(id, call.receive(), user))
 
             }
 

@@ -4,7 +4,7 @@ data class PostOutDto(
 
     val id: Int,
     val title: String,
-    val author: String,
+    val userId: Int,
     val time: Long,
     val likeCount: Int = 0,
     val commentCount: Int = 0,
@@ -23,7 +23,7 @@ data class PostOutDto(
 
             id = model.id,
             title = model.title,
-            author = model.author,
+            userId = model.userId,
             time = model.time,
             likeCount = model.likeCount,
             commentCount = model.commentCount,
