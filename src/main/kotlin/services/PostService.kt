@@ -25,7 +25,7 @@ class PostService(
 
     suspend fun save(id: Int, input: PostInputDto): PostOutDto {
 
-        val model = when (id) {
+        val model = repository.save(when (id) {
 
             0 -> Post(
                 0,
@@ -50,13 +50,13 @@ class PostService(
                 advertUrl = input.advertUrl
             )
 
-        } ?: throw NotFoundException()
+        } ?: throw NotFoundException())
 
         return PostOutDto.fromModel(model)
 
     }
 
-    suspend fun share(id: Int) = (repository.rePost(id))
+    suspend fun share(id: Int) = (repository.share(id))
     suspend fun remove(id: Int) = repository.removeById(id)
     suspend fun like(id: Int) = repository.likeById(id)
     suspend fun dislike(id: Int) = repository.dislikeById(id)

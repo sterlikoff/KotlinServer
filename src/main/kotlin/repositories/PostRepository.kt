@@ -10,6 +10,6 @@ interface PostRepository {
     suspend fun removeById(id: Int)
     suspend fun likeById(id: Int)
     suspend fun dislikeById(id: Int)
-    suspend fun rePost(id: Int)
+    suspend fun share(id: Int)
 
 }

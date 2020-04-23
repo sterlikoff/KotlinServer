@@ -1,3 +1,4 @@
+import classes.StubData
 import exceptions.PasswordChangeException
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -16,8 +17,7 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.*
 import io.ktor.server.cio.EngineMain
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import models.*
 import services.JWTTokenService
 import org.kodein.di.generic.bind
@@ -33,7 +33,6 @@ import repositories.UserRepository
 import repositories.UserRepositoryInMemory
 import services.PostService
 import services.UserService
-import kotlin.coroutines.EmptyCoroutineContext
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -110,80 +109,12 @@ fun Application.module(testing: Boolean = false) {
 
     }
 
-    with(CoroutineScope(EmptyCoroutineContext)) {
-
-        launch {
-
-            val userService by kodein().instance<UserService>()
-
-            userService.registration(
-                RegistrationRequestDto(
-                    "admin",
-                    "admin"
-                )
-            )
-
-            val postService by kodein().instance<PostService>()
-
-            postService.save(
-                0,
-                PostInputDto(
-                    "Is Video and Event Post",
-                    "Danill Sterlikov",
-                    33.1546,
-                    44.46847,
-                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
-            )
-
-            postService.save(
-                0,
-                PostInputDto(
-                    "Secondary post with very-very long title. Really very long title.",
-                    "Ivan Ivanov"
-                )
-            )
-
-            postService.save(
-                0,
-                PostInputDto(
-                    "Is Event Post",
-                    "Kolya",
-                    33.1546,
-                    44.46847
-                )
-            )
-
-            val sourcePost = postService.save(
-                0,
-                PostInputDto(
-                    "Is only video Post",
-                    "Kolya",
-                    null,
-                    null,
-                    "https://www.youtube.com/watch?v=WhWc3b3KhnY"
-                )
-            )
-
-            postService.share(sourcePost.id)
-
-            postService.save(
-                0,
-                PostInputDto(
-                    "Is Advertising",
-                    "Google",
-                    null,
-                    null,
-                    null,
-                    "https://google.com"
-                )
-            )
-
-        }
-    }
-
     install(Routing) {
         v1()
+    }
+
+    runBlocking {
+        StubData.init(this@module)
     }
 
 }
