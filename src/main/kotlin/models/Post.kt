@@ -13,6 +13,7 @@ data class Post(
     val lat: Double? = null,
     val videoUrl: String? = null,
     val parentId: Int? = null,
-    val advertUrl: String? = null
+    val advertUrl: String? = null,
+    val imageId: String? = null
 
 )

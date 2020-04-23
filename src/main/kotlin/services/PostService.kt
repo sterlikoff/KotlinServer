@@ -45,7 +45,8 @@ class PostService(
                 input.lat,
                 input.videoUrl,
                 null,
-                input.advertUrl
+                input.advertUrl,
+                input.imageId
             )
             else -> {
 
@@ -54,7 +55,8 @@ class PostService(
                     lon = input.lon,
                     lat = input.lat,
                     videoUrl = input.videoUrl,
-                    advertUrl = input.advertUrl
+                    advertUrl = input.advertUrl,
+                    imageId = input.imageId
                 )
 
             }

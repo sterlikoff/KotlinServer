@@ -1,24 +1,40 @@
 import com.jayway.jsonpath.JsonPath
+import io.ktor.application.Application
+import io.ktor.config.MapApplicationConfig
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.Json
+import io.ktor.http.content.PartData
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
 import junit.framework.Assert.assertEquals
+import kotlinx.io.streams.asInput
 import org.junit.Test
+import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.test.assertTrue
 
 class ApplicationTest {
 
-    private fun getAuthToken(engine: TestApplicationEngine): String {
+    private val uploadPath = Files.createTempDirectory("test").toString()
+
+    private val configure: Application.() -> Unit = {
+        (environment.config as MapApplicationConfig).apply {
+            put("upload.dir", uploadPath)
+        }
+        module()
+    }
+
+    private fun getAuthToken(engine: TestApplicationEngine, username: String = "admin", password: String = "admin"): String {
 
         return with(engine.handleRequest(HttpMethod.Post, "/api/v1/authentication") {
             addHeader(HttpHeaders.ContentType, Json.toString())
             setBody(
                 """
                         {
-                        "username": "admin",
-                        "password": "admin"
+                        "username": "$username",
+                        "password": "$password"
                         }
                     """.trimIndent()
             )
@@ -33,7 +49,7 @@ class ApplicationTest {
     @Test
     fun testPostsOnlyAuthorized() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
             with(handleRequest(HttpMethod.Get, "/api/v1/posts")) {
                 assertEquals(HttpStatusCode.Unauthorized, response.status())
             }
@@ -44,7 +60,7 @@ class ApplicationTest {
     @Test
     fun testRegistration() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
 
             with(handleRequest(HttpMethod.Post, "/api/v1/registration") {
                 addHeader(HttpHeaders.ContentType, Json.toString())
@@ -68,7 +84,7 @@ class ApplicationTest {
     @Test
     fun testAuth() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
 
             val token = getAuthToken(this)
 
@@ -86,7 +102,7 @@ class ApplicationTest {
     @Test
     fun testGetAll() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
 
             val token = getAuthToken(this)
 
@@ -104,7 +120,7 @@ class ApplicationTest {
     @Test
     fun testPostActions() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
 
             val token = getAuthToken(this)
 
@@ -164,7 +180,7 @@ class ApplicationTest {
     @Test
     fun testAlien() {
 
-        withTestApplication({ module() }) {
+        withTestApplication(configure) {
 
             val token = getAuthToken(this)
 
@@ -177,6 +193,48 @@ class ApplicationTest {
 
         }
 
+    }
+
+    @Test
+    fun testUpload() {
+        withTestApplication(configure) {
+
+            val token = getAuthToken(this, "user", "user")
+
+            with(handleRequest(HttpMethod.Post, "/api/v1/posts/addImage/1") {
+
+                val boundary = "***bbb***"
+
+                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.ContentType, ContentType.MultiPart.FormData.withParameter("boundary", boundary).toString())
+
+                setBody(
+                    boundary,
+                    listOf(
+                        PartData.FileItem({
+                            Files.newInputStream(Paths.get("./src/test/resources/test.jpg")).asInput()
+                        }, {}, headersOf(
+                            HttpHeaders.ContentDisposition to listOf(
+                                ContentDisposition.File.withParameter(
+                                    ContentDisposition.Parameters.Name, "file"
+                                ).toString(),
+                                ContentDisposition.File.withParameter(
+                                    ContentDisposition.Parameters.FileName, "photo.jpg"
+                                ).toString()
+                            ),
+                            HttpHeaders.ContentType to listOf(ContentType.Image.JPEG.toString())
+                        )
+                        )
+                    )
+                )
+            }) {
+                assertEquals(HttpStatusCode.OK, response.status())
+
+                val postImageId = JsonPath.read<String>(response.content!!, "$.imageId")
+                assertTrue(postImageId != null)
+
+            }
+        }
     }
 
 }

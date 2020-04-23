@@ -13,7 +13,8 @@ data class PostOutDto(
     val lat: Double? = null,
     val videoUrl: String? = null,
     val parentId: Int? = null,
-    val advertUrl: String? = null
+    val advertUrl: String? = null,
+    val imageId: String? = null
 
 ) {
 
@@ -32,7 +33,8 @@ data class PostOutDto(
             lat = model.lat,
             videoUrl = model.videoUrl,
             parentId = model.parentId,
-            advertUrl = model.advertUrl
+            advertUrl = model.advertUrl,
+            imageId = model.imageId
 
         )
 
