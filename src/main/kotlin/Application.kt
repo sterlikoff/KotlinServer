@@ -178,24 +178,21 @@ fun Routing.v1() {
             get("/like/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                postService.like(id)
-                call.respond(HttpStatusCode.NoContent)
+                call.respond(postService.like(id))
 
             }
 
             get("/dislike/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                postService.dislike(id)
-                call.respond(HttpStatusCode.NoContent)
+                call.respond(postService.dislike(id))
 
             }
 
             get("/share/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                postService.share(id)
-                call.respond(HttpStatusCode.NoContent)
+                call.respond( postService.share(id))
 
             }
 

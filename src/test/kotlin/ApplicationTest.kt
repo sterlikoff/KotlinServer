@@ -101,4 +101,64 @@ class ApplicationTest {
 
     }
 
+    @Test
+    fun testPostActions() {
+
+        withTestApplication({ module() }) {
+
+            val token = getAuthToken(this)
+
+            with(handleRequest(HttpMethod.Post, "/api/v1/posts/create") {
+
+                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.ContentType, Json.toString())
+                setBody(
+                    """
+                        {
+                        "title": "newPost",
+                        "author": "me"
+                        }
+                    """.trimIndent()
+                )
+
+            }) {
+                response
+
+                assertEquals(HttpStatusCode.OK, response.status())
+
+                val title = JsonPath.read<String>(response.content!!, "$.title")
+                val id = JsonPath.read<Int>(response.content!!, "$.id")
+
+                assertEquals(title, "newPost")
+
+                with(handleRequest(HttpMethod.Get, "/api/v1/posts/like/$id") {
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                }) {
+                    response
+
+                    assertEquals(HttpStatusCode.OK, response.status())
+
+                    val likeCount = JsonPath.read<Int>(response.content!!, "$.likeCount")
+                    assertEquals(likeCount, 1)
+
+                    with(handleRequest(HttpMethod.Get, "/api/v1/posts/dislike/$id") {
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                    }) {
+                        response
+
+                        assertEquals(HttpStatusCode.OK, response.status())
+
+                        val newLikeCount = JsonPath.read<Int>(response.content!!, "$.likeCount")
+                        assertEquals(newLikeCount, 0)
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
 }

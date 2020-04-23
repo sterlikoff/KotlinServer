@@ -35,24 +35,24 @@ class PostRepositoryInMemory : PostRepository {
         }
     }
 
-    override suspend fun likeById(id: Int) {
+    override suspend fun likeById(id: Int): Post {
         mutex.withLock {
             val model = getByIdInternal(id)
-            saveInternal(model.copy(likeCount = model.likeCount.inc()))
+            return saveInternal(model.copy(likeCount = model.likeCount.inc()))
         }
     }
 
-    override suspend fun dislikeById(id: Int) {
+    override suspend fun dislikeById(id: Int): Post {
         mutex.withLock {
             val model = getByIdInternal(id)
-            saveInternal(model.copy(likeCount = model.likeCount.dec()))
+            return saveInternal(model.copy(likeCount = model.likeCount.dec()))
         }
     }
 
-    override suspend fun share(id: Int) {
+    override suspend fun share(id: Int): Post {
         mutex.withLock {
             val model = getByIdInternal(id)
-            saveInternal(model.copy(rePostCount = model.rePostCount.inc()))
+            return saveInternal(model.copy(rePostCount = model.rePostCount.inc()))
         }
     }
 
