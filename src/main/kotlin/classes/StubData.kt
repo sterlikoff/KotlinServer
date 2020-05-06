@@ -38,6 +38,7 @@ class StubData {
                 0,
                 PostInputDto(
                     "Is Video and Event Post",
+                    "Any text may be in this field - is post content.",
                     33.1546,
                     44.46847,
                     "https://www.youtube.com/watch?v=WhWc3b3KhnY"
@@ -47,7 +48,7 @@ class StubData {
 
             postService.save(
                 0,
-                PostInputDto("Secondary post with very-very long title. Really very long title."),
+                PostInputDto("Secondary post with very-very long title. Really very long title.", ""),
                 user
             )
 
@@ -55,6 +56,7 @@ class StubData {
                 0,
                 PostInputDto(
                     "Is Event Post",
+                    "Any text may be in this field - is post content. Text may be more.",
                     33.1546,
                     44.46847
                 ),
@@ -65,6 +67,7 @@ class StubData {
                 0,
                 PostInputDto(
                     "Is only video Post",
+                    "Any text may be in this field - is post content. \n Many lines \n Third line.",
                     null,
                     null,
                     "https://www.youtube.com/watch?v=WhWc3b3KhnY"
@@ -78,6 +81,7 @@ class StubData {
                 0,
                 PostInputDto(
                     "Is Advertising",
+                    "Is advertising by Google!!!",
                     null,
                     null,
                     null,

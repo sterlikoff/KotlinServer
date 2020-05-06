@@ -12,18 +12,13 @@ class PostService(
     private val repository: PostRepository
 ) {
 
-    suspend fun getAll(): List<PostOutDto> {
-        return repository.getAll().map { PostOutDto.fromModel(it) }
-    }
+    suspend fun getAll(): List<Post> = repository.getAll()
 
     private suspend fun getModelById(id: Int): Post {
-        return repository.getById(id)  ?: throw NotFoundException()
+        return repository.getById(id) ?: throw NotFoundException()
     }
 
-    suspend fun getById(id: Int): PostOutDto {
-        val model = getModelById(id)
-        return PostOutDto.fromModel(model)
-    }
+    suspend fun getById(id: Int): Post = getModelById(id)
 
     private fun checkAccess(post: Post, user: User) {
         if (post.userId != user.id) throw AccessDeniedException("Access denied")
@@ -36,6 +31,7 @@ class PostService(
             0 -> Post(
                 0,
                 input.title,
+                input.content,
                 user.id,
                 System.currentTimeMillis(),
                 0,
@@ -64,7 +60,7 @@ class PostService(
         }
 
         if (id != 0) checkAccess(model, user)
-        return PostOutDto.fromModel(repository.save(model))
+        return PostOutDto.fromModel(repository.save(model), user)
 
     }
 

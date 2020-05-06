@@ -160,17 +160,20 @@ fun Routing.v1() {
         route("api/v1/posts") {
 
             get {
-                val all = postService.getAll()
-                println(all.size)
+
+                val all = postService.getAll().map {
+                    PostOutDto.fromModel(it, userService.getModelById(it.userId) ?: throw NotFoundException())
+                }
+
                 call.respond(all)
             }
 
             get("/{id}") {
 
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                val model = postService.getById(id)
+                val model: Post = postService.getById(id)
 
-                call.respond(model)
+                call.respond(PostOutDto.fromModel(model, userService.getModelById(model.userId) ?: throw NotFoundException()))
 
             }
 
@@ -232,7 +235,7 @@ fun Routing.v1() {
                     val multipart = call.receiveMultipart()
                     val response = fileService.save(multipart)
 
-                    val input = PostInputDto.fromOut(post).copy(
+                    val input = PostInputDto.fromModel(post).copy(
                         imageId = response.id
                     )
 

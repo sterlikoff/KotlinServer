@@ -4,6 +4,7 @@ data class Post(
 
     val id: Int,
     val title: String,
+    val content: String,
     val userId: Int,
     val time: Long,
     val likeCount: Int = 0,

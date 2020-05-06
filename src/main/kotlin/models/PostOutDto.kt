@@ -4,7 +4,8 @@ data class PostOutDto(
 
     val id: Int,
     val title: String,
-    val userId: Int,
+    val content: String,
+    val username: String,
     val time: Long,
     val likeCount: Int = 0,
     val commentCount: Int = 0,
@@ -20,11 +21,12 @@ data class PostOutDto(
 
     companion object {
 
-        fun fromModel(model: Post) = PostOutDto(
+        fun fromModel(model: Post, user: User) = PostOutDto(
 
             id = model.id,
             title = model.title,
-            userId = model.userId,
+            content = model.content,
+            username = user.username,
             time = model.time,
             likeCount = model.likeCount,
             commentCount = model.commentCount,

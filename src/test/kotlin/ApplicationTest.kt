@@ -131,8 +131,8 @@ class ApplicationTest {
                 setBody(
                     """
                         {
-                        "title": "newPost",
-                        "author": "me"
+                        "title": "title of post",
+                        "content": "content of post"
                         }
                     """.trimIndent()
                 )
@@ -143,9 +143,11 @@ class ApplicationTest {
                 assertEquals(HttpStatusCode.OK, response.status())
 
                 val title = JsonPath.read<String>(response.content!!, "$.title")
+                val content = JsonPath.read<String>(response.content!!, "$.content")
                 val id = JsonPath.read<Int>(response.content!!, "$.id")
 
-                assertEquals(title, "newPost")
+                assertEquals(title, "title of post")
+                assertEquals(content, "content of post")
 
                 with(handleRequest(HttpMethod.Get, "/api/v1/posts/like/$id") {
                     addHeader(HttpHeaders.Authorization, "Bearer $token")
