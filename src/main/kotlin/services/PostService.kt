@@ -69,7 +69,7 @@ class PostService(
         repository.removeById(id)
     }
 
-    suspend fun share(id: Int) = repository.share(id)
+    suspend fun share(id: Int, user: User) = repository.share(id, user)
     suspend fun like(id: Int) = repository.likeById(id)
     suspend fun dislike(id: Int) = repository.dislikeById(id)
 

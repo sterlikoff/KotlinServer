@@ -219,8 +219,10 @@ fun Routing.v1() {
 
             get("/share/{id}") {
 
+                val user = call.authentication.principal<User>() ?: throw NotFoundException()
+
                 val id = call.parameters["id"]?.toIntOrNull() ?: throw ParameterConversionException("id", "Int")
-                call.respond(postService.share(id))
+                call.respond(postService.share(id, user))
 
             }
 

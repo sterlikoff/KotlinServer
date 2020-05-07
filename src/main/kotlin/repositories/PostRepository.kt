@@ -1,6 +1,7 @@
 package repositories
 
 import models.Post
+import models.User
 
 interface PostRepository {
 
@@ -10,6 +11,6 @@ interface PostRepository {
     suspend fun removeById(id: Int)
     suspend fun likeById(id: Int): Post
     suspend fun dislikeById(id: Int): Post
-    suspend fun share(id: Int): Post
+    suspend fun share(id: Int, user: User): Post
 
 }

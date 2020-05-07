@@ -4,6 +4,7 @@ import io.ktor.features.NotFoundException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import models.Post
+import models.User
 
 class PostRepositoryInMemory : PostRepository {
 
@@ -49,10 +50,32 @@ class PostRepositoryInMemory : PostRepository {
         }
     }
 
-    override suspend fun share(id: Int): Post {
+    override suspend fun share(id: Int, user: User): Post {
+
         mutex.withLock {
+
             val model = getByIdInternal(id)
-            return saveInternal(model.copy(rePostCount = model.rePostCount.inc()))
+            saveInternal(model.copy(rePostCount = model.rePostCount.inc()))
+
+            return saveInternal(
+                Post(
+                    0,
+                    model.title,
+                    model.content,
+                    user.id,
+                    0,
+                    0,
+                    0,
+                    0,
+                    model.lon,
+                    model.lat,
+                    model.videoUrl,
+                    model.id,
+                    model.advertUrl,
+                    model.imageId
+                )
+            )
+
         }
     }
 

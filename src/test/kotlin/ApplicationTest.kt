@@ -13,6 +13,7 @@ import kotlinx.io.streams.asInput
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class ApplicationTest {
@@ -170,6 +171,18 @@ class ApplicationTest {
                         assertEquals(newLikeCount, 0)
 
                     }
+
+                }
+
+                with(handleRequest(HttpMethod.Get, "/api/v1/posts/share/$id") {
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                }) {
+                    response
+
+                    assertEquals(HttpStatusCode.OK, response.status())
+                    val parentId = JsonPath.read<Int>(response.content!!, "$.parentId")
+
+                    assertEquals(parentId, id)
 
                 }
 

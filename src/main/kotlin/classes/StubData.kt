@@ -75,7 +75,7 @@ class StubData {
                 user
             )
 
-            postService.share(sourcePost.id)
+            postService.share(sourcePost.id, user)
 
             postService.save(
                 0,
