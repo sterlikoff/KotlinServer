@@ -10,6 +10,7 @@ import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
 import junit.framework.Assert.assertEquals
 import kotlinx.io.streams.asInput
+import models.PostOutDto
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -250,6 +251,72 @@ class ApplicationTest {
 
             }
         }
+    }
+
+    @Test
+    fun testLimit() {
+
+        withTestApplication(configure) {
+
+            val token = getAuthToken(this)
+            val requestLimit = 1
+
+            with(handleRequest(HttpMethod.Get, "/api/v1/posts?limit=$requestLimit") {
+
+                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.ContentType, Json.toString())
+
+            }) {
+
+                response
+                assertEquals(HttpStatusCode.OK, response.status())
+
+                val list = JsonPath.read<List<PostOutDto>>(response.content!!, "$")
+                assertEquals(requestLimit, list.size)
+
+            }
+
+        }
+
+    }
+
+    @Test
+    fun testOffset() {
+
+        withTestApplication(configure) {
+
+            val token = getAuthToken(this)
+
+            with(handleRequest(HttpMethod.Get, "/api/v1/posts?offset=0") {
+
+                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.ContentType, Json.toString())
+
+            }) {
+
+                response
+                assertEquals(HttpStatusCode.OK, response.status())
+
+                val firstId = JsonPath.read<Int>(response.content!!, "$[0].id")
+
+                with(handleRequest(HttpMethod.Get, "/api/v1/posts?offset=1") {
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                    addHeader(HttpHeaders.ContentType, Json.toString())
+                }) {
+
+                    response
+                    assertEquals(HttpStatusCode.OK, response.status())
+
+                    val secondId = JsonPath.read<Int>(response.content!!, "$[0].id")
+
+                    assertNotEquals(firstId, secondId)
+
+                }
+
+            }
+
+        }
+
     }
 
 }

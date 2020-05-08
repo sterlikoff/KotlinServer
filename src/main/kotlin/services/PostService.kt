@@ -12,7 +12,7 @@ class PostService(
     private val repository: PostRepository
 ) {
 
-    suspend fun getAll(): List<Post> = repository.getAll()
+    suspend fun getAll(offset: Int, limit: Int): List<Post> = repository.getAll(offset, limit)
 
     private suspend fun getModelById(id: Int): Post {
         return repository.getById(id) ?: throw NotFoundException()

@@ -161,7 +161,10 @@ fun Routing.v1() {
 
             get {
 
-                val all = postService.getAll().map {
+                val offset = call.parameters["offset"]?.toInt() ?: 0
+                val limit = call.parameters["limit"]?.toInt() ?: 5
+
+                val all = postService.getAll(offset, limit).map {
                     PostOutDto.fromModel(it, userService.getModelById(it.userId) ?: throw NotFoundException())
                 }
 

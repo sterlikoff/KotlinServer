@@ -5,7 +5,7 @@ import models.User
 
 interface PostRepository {
 
-    suspend fun getAll(): List<Post>
+    suspend fun getAll(offset: Int, limit: Int): List<Post>
     suspend fun getById(id: Int): Post?
     suspend fun save(item: Post): Post
     suspend fun removeById(id: Int)

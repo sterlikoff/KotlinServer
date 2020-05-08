@@ -12,9 +12,9 @@ class PostRepositoryInMemory : PostRepository {
     private val items = mutableListOf<Post>()
     private val mutex = Mutex()
 
-    override suspend fun getAll(): List<Post> {
+    override suspend fun getAll(offset: Int, limit: Int): List<Post> {
         mutex.withLock {
-            return items.reversed()
+            return items.reversed().subList(offset, offset + limit)
         }
     }
 
